@@ -284,6 +284,92 @@ yaml
 
 ---
 
+# ⚙️ GitHub Action: Repo Quality Enforcement Pipeline
+
+Add the following workflow file to enforce repository hygiene rules including linting, testing, commit message standards, and secret scanning.
+
+## 📄 File: `.github/workflows/quality-check.yml`
+
+```yaml
+name: 🔍 Repo Quality Checks
+
+on:
+  push:
+    branches: [main, trunk]
+  pull_request:
+    branches: [main, trunk]
+
+jobs:
+  quality-checks:
+    name: 🚦 Quality Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set Up Node.js (for JS/TS projects)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🧹 Run Linter
+        run: npm run lint
+
+      - name: 🧪 Run Tests
+        run: npm test
+
+      - name: 🔐 Check for Secrets
+        uses: secret-scanner/action@v1
+        with:
+          fail-on-detection: true
+
+      - name: 🔤 Validate Commit Messages (Conventional Commits)
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: commitlint.config.js
+
+      - name: 🚫 Check for Ignored Files Committed
+        run: |
+          git check-ignore $(git ls-files) | tee .ignored
+          if [ -s .ignored ]; then
+            echo "❌ Files tracked by Git that should be ignored:"
+            cat .ignored
+            exit 1
+          fi
+📌 Project Requirements
+commitlint.config.js
+js
+نسخ الكود
+module.exports = { extends: ['@commitlint/config-conventional'] };
+package.json Scripts
+json
+نسخ الكود
+{
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest"
+  }
+}
+✅ What This Pipeline Enforces
+🔍 Linting and Tests must pass
+
+🧠 Commit messages must follow Conventional Commits
+
+🔐 Secrets must not be present
+
+🚫 Git-tracked files that should be ignored are flagged
+
+💡 Pro Tip:
+Enable branch protection rules to require these checks to pass before merging. This keeps your main branch clean and stable.
+
+```
+
+---
+
 Keep Learning and Building Productive, Creative, Innvoative Applications 😊!
 
 
